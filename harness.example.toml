@@ -1,0 +1,57 @@
+[project]
+name = "cosmic-python-service-layer"
+source = "vendor/cosmic-python"
+runs_dir = ".harness/runs"
+acceptance_dir = "demo/cosmic_acceptance"
+start_commit = "17215904806967ee80a71ce0c6f771932382ed0f"
+writable = ["services.py"]
+task = "Implement service-layer add_batch and deallocate operations with these exact public APIs: add_batch(ref, sku, qty, eta, repo, session) and deallocate(line, repo, session). add_batch must create model.Batch(ref, sku, qty, eta), add it through the repository, and commit. deallocate must call each existing Batch.deallocate(line) method for batches returned by repo.list(), then commit. Preserve allocation behavior and existing tests."
+
+[model]
+name = "qwen2.5-coder:7b"
+endpoint = "http://127.0.0.1:11434/api/chat"
+timeout_seconds = 300
+context_tokens = 16384
+predict_tokens = 2048
+
+[limits]
+max_actions = 15
+max_retries = 2
+max_file_bytes = 100000
+max_tool_output_bytes = 20000
+max_command_output_bytes = 50000
+max_repo_bytes = 50000000
+max_files = 5000
+
+[execution]
+backend = "docker"
+allow_local_process = false
+docker_image = "poc-harness-python:3.11"
+memory_mb = 512
+cpu_seconds = 30
+pids = 64
+
+[[checks]]
+name = "regression"
+kind = "regression"
+command = ["python3", "-m", "pytest", "-q", "test_batches.py", "test_allocate.py", "test_services.py", "test_repository.py", "test_orm.py"]
+cwd = "repo"
+model_allowed = true
+timeout_seconds = 30
+
+[[checks]]
+name = "acceptance"
+kind = "acceptance"
+command = ["python3", "acceptance_check.py"]
+cwd = "acceptance"
+model_allowed = false
+timeout_seconds = 30
+
+[[checks]]
+name = "quality"
+kind = "lint"
+command = ["python3", "quality_check.py"]
+cwd = "acceptance"
+model_allowed = true
+timeout_seconds = 30
+

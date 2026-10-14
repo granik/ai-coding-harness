@@ -1,0 +1,5 @@
+{"tool":"read_file","args":{"path":"services.py"}}
+{"tool":"edit_file","args":{"path":"services.py","old":"class InvalidSku(Exception):\n    pass\n","new":"class InvalidSku(Exception):\n    pass\n\n\ndef add_batch(ref, sku, qty, eta, repo, session):\n    repo.add(model.Batch(ref, sku, qty, eta))\n    session.commit()\n\n\ndef deallocate(line: OrderLine, repo: AbstractRepository, session):\n    for batch in repo.list():\n        batch.deallocate(line)\n    session.commit()\n"}}
+{"tool":"run_check","args":{"name":"regression"}}
+{"final":"Implemented add_batch and deallocate in the service layer and ran the configured regression check."}
+

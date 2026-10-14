@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stage1-coding-harness"
+version = "0.1.0"
+description = "A bounded local coding harness for Ollama"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+demo = ["pytest>=7,<9", "requests>=2,<3", "SQLAlchemy>=1.4,<2"]
+
+[project.scripts]
+coding-harness = "coding_harness.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["coding_harness*"]
+

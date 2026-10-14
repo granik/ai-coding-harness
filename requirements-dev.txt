@@ -1,0 +1,5 @@
+-e .
+pytest>=7,<9
+requests>=2,<3
+SQLAlchemy>=1.4,<2
+
