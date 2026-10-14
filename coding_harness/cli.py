@@ -52,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--model", help="override the Ollama model name")
     run.add_argument("--backend", choices=("docker", "process"))
     run.add_argument(
+        "--mode",
+        choices=("edit", "read-only"),
+        help="override the configured tool mode for this run",
+    )
+    run.add_argument(
         "--scripted",
         help="JSONL model replies for a repeatable demo; does not call Ollama",
     )
@@ -86,7 +91,7 @@ def _print_report(report: dict, report_path: Path) -> None:
 
 def run_command(args: argparse.Namespace) -> int:
     config = load_config(args.config).with_overrides(
-        task=args.task, model=args.model, backend=args.backend
+        task=args.task, model=args.model, backend=args.backend, mode=args.mode
     )
     DisposableWorkspace.verify_start_commit(
         config.project.source, config.project.start_commit
@@ -124,6 +129,7 @@ def run_command(args: argparse.Namespace) -> int:
             "project": config.project.name,
             "model": "scripted" if args.scripted else config.model.name,
             "backend": config.execution.backend,
+            "mode": config.project.mode,
             "task": config.project.task,
             "repository_copy": str(workspace.repo),
         }

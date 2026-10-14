@@ -17,6 +17,26 @@ class ModelError(RuntimeError):
     pass
 
 
+def _generation_temperature(messages: list[dict[str, str]]) -> float:
+    """Add slight variation only while recovering from a rejected action."""
+    recent_context = "\n".join(
+        message.get("content", "") for message in messages[-8:]
+    )
+    recovering = any(
+        marker in recent_context
+        for marker in (
+            '"status": "error"',
+            '"status":"error"',
+            "Python syntax error",
+            "Focused test file rejected",
+            "validation_error",
+            "unresolved_check_failure",
+            "Repeated failed action",
+        )
+    )
+    return 0.1 if recovering else 0
+
+
 class OllamaModel:
     def __init__(self, config: ModelConfig) -> None:
         parsed = urllib.parse.urlsplit(config.endpoint)
@@ -37,7 +57,10 @@ class OllamaModel:
             "think": False,
             "format": schema,
             "options": {
-                "temperature": 0,
+                # Keep ordinary tool decisions deterministic. After a rejected action,
+                # a small amount of variation helps local models leave an exact failed
+                # completion instead of reproducing it until the retry limit.
+                "temperature": _generation_temperature(messages),
                 "num_ctx": self.config.context_tokens,
                 "num_predict": self.config.predict_tokens,
                 "repeat_last_n": 64,

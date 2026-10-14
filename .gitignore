@@ -7,3 +7,6 @@ __pycache__/
 agent_trace.jsonl
 vendor/
 
+.idea/
+.DS_Store
+

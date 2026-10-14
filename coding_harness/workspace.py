@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import difflib
-import fnmatch
 import hashlib
 import os
 from pathlib import Path
@@ -250,8 +249,7 @@ class DisposableWorkspace:
         relative = self.relative(path)
         return any(
             pattern in {"*", "**"}
-            or fnmatch.fnmatch(relative, pattern)
-            or Path(relative).match(pattern)
+            or Path("/" + relative).match("/" + pattern)
             for pattern in self.writable
         )
 

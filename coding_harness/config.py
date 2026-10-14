@@ -20,6 +20,7 @@ class ProjectConfig:
     start_commit: str
     task: str
     writable: tuple[str, ...]
+    mode: str = "edit"
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,7 @@ class ModelConfig:
 @dataclass(frozen=True)
 class LimitsConfig:
     max_actions: int = 15
+    max_inspection_actions: int = 6
     max_retries: int = 2
     max_file_bytes: int = 100_000
     max_tool_output_bytes: int = 20_000
@@ -77,8 +79,13 @@ class HarnessConfig:
         task: str | None = None,
         model: str | None = None,
         backend: str | None = None,
+        mode: str | None = None,
     ) -> "HarnessConfig":
-        project_cfg = replace(self.project, task=task) if task else self.project
+        project_cfg = self.project
+        if task:
+            project_cfg = replace(project_cfg, task=task)
+        if mode:
+            project_cfg = replace(project_cfg, mode=mode)
         model_cfg = replace(self.model, name=model) if model else self.model
         execution_cfg = (
             replace(self.execution, backend=backend) if backend else self.execution
@@ -110,6 +117,13 @@ def _string(value, label: str, *, allow_empty: bool = False) -> str:
     if not isinstance(value, str) or (not allow_empty and not value.strip()):
         raise ConfigError(f"{label} must be a non-empty string")
     return value
+
+
+def _project_mode(value) -> str:
+    mode = _string(value, "project.mode")
+    if mode not in {"edit", "read-only"}:
+        raise ConfigError("project.mode must be 'edit' or 'read-only'")
+    return mode
 
 
 def _resolve(base: Path, value: str, label: str) -> Path:
@@ -161,6 +175,7 @@ def load_config(path: str | Path) -> HarnessConfig:
         ),
         task=_string(project_data.get("task", ""), "project.task"),
         writable=tuple(writable_value),
+        mode=_project_mode(project_data.get("mode", "edit")),
     )
 
     model_data = _table(data, "model")
@@ -191,6 +206,13 @@ def load_config(path: str | Path) -> HarnessConfig:
             limits_data.get("max_actions", defaults.max_actions),
             "limits.max_actions",
             maximum=50,
+        ),
+        max_inspection_actions=_positive(
+            limits_data.get(
+                "max_inspection_actions", defaults.max_inspection_actions
+            ),
+            "limits.max_inspection_actions",
+            maximum=20,
         ),
         max_retries=_positive(
             limits_data.get("max_retries", defaults.max_retries),
