@@ -1,0 +1,64 @@
+[project]
+name = "lab1-target-service-pricing"
+source = "../ollama-lab"
+runs_dir = ".harness/target-service-runs"
+acceptance_dir = "demo/target_service_acceptance"
+start_commit = "1509985163389bf4e123025106247f93d31b931b"
+writable = [
+  "target-service/orders/pricing.py",
+  "target-service/tests/test_student.py",
+]
+mode = "edit"
+task = """Repair orders/pricing.py according to docs/business-rules.md. Keep validation and acceptance tests unchanged.
+Read the files before editing. Add one useful regression test in tests/test_student.py. Request approval to run
+python3 -m unittest discover -s tests -v. Summarize what changed and what you verified."""
+
+[model]
+name = "qwen2.5-coder:7b"
+endpoint = "http://127.0.0.1:11434/api/chat"
+timeout_seconds = 900
+context_tokens = 16384
+predict_tokens = 2048
+
+[limits]
+max_actions = 15
+max_inspection_actions = 3
+max_retries = 2
+max_file_bytes = 100000
+max_tool_output_bytes = 20000
+max_command_output_bytes = 50000
+max_repo_bytes = 50000000
+max_files = 5000
+
+[execution]
+backend = "docker"
+allow_local_process = false
+docker_image = "poc-harness-python:3.11"
+memory_mb = 512
+cpu_seconds = 30
+pids = 64
+
+[[checks]]
+name = "regression"
+kind = "regression"
+command = ["python3", "regression_check.py"]
+cwd = "acceptance"
+model_allowed = true
+timeout_seconds = 60
+
+[[checks]]
+name = "acceptance"
+kind = "acceptance"
+command = ["python3", "acceptance_check.py"]
+cwd = "acceptance"
+model_allowed = false
+timeout_seconds = 30
+
+[[checks]]
+name = "quality"
+kind = "lint"
+command = ["python3", "quality_check.py"]
+cwd = "acceptance"
+model_allowed = true
+timeout_seconds = 30
+
